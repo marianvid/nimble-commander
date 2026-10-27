@@ -17,6 +17,7 @@ public:
     class SFTP;
     class LANShare;
     class WebDAV;
+    class S3;
     class ConnectionVisitor;
 
     static nc::base::UUID MakeUUID();
@@ -77,6 +78,7 @@ public:
     virtual void Visit(const NetworkConnectionsManager::SFTP &_sftp);
     virtual void Visit(const NetworkConnectionsManager::LANShare &_share);
     virtual void Visit(const NetworkConnectionsManager::WebDAV &_webdav);
+    virtual void Visit(const NetworkConnectionsManager::S3 &_s3);
 };
 
 class NetworkConnectionsManager::Connection
@@ -181,6 +183,20 @@ public:
     int port;
     bool https;
     bool operator==(const WebDAV &_rhs) const noexcept;
+};
+
+// Amazon S3 or an S3-compatible object storage.
+// The secret key lives in the Keychain as the connection's "password", unless an AWS CLI profile is used.
+class NetworkConnectionsManager::S3 : public NetworkConnectionsManager::BaseConnection
+{
+public:
+    std::string endpoint;    // empty for AWS, otherwise e.g. "https://minio.lan:9000"
+    std::string region;      // e.g. "eu-central-1"
+    std::string bucket;      // optional, roots the connection at a single bucket
+    std::string access_key;  // ignored when aws_profile is set
+    std::string aws_profile; // optional, credentials are read from ~/.aws on every connect
+    bool path_style = false;
+    bool operator==(const S3 &_rhs) const noexcept = default;
 };
 
 struct NetworkConnectionsManager::Connection::Concept {

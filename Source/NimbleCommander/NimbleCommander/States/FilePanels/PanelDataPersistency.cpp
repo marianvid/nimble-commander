@@ -9,6 +9,7 @@
 #include <VFS/NetFTP.h>
 #include <VFS/NetSFTP.h>
 #include <VFS/NetWebDAV.h>
+#include <VFS/NetS3.h>
 #include <VFS/PS.h>
 #include <VFS/XAttr.h>
 #include <algorithm>
@@ -97,7 +98,8 @@ static nc::config::Value EncodeAny(const std::any &_host);
 static bool IsNetworkVFS(const VFSHost &_host)
 {
     const auto tag = _host.Tag();
-    return tag == vfs::FTPHost::UniqueTag || tag == vfs::SFTPHost::UniqueTag || tag == vfs::WebDAVHost::UniqueTag;
+    return tag == vfs::FTPHost::UniqueTag || tag == vfs::SFTPHost::UniqueTag || tag == vfs::WebDAVHost::UniqueTag ||
+           tag == vfs::S3Host::UniqueTag;
 }
 
 std::any PanelDataPersistency::EncodeState(const VFSHost &_host)
@@ -288,6 +290,8 @@ static const char *VFSTagForNetworkConnection(const NetworkConnectionsManager::C
         return vfs::SFTPHost::UniqueTag;
     else if( _conn.Cast<NetworkConnectionsManager::WebDAV>() )
         return vfs::WebDAVHost::UniqueTag;
+    else if( _conn.Cast<NetworkConnectionsManager::S3>() )
+        return vfs::S3Host::UniqueTag;
     else
         return "<unknown_vfs>";
 }

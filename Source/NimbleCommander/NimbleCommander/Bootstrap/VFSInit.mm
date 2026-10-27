@@ -8,6 +8,7 @@
 #include <VFS/NetFTP.h>
 #include <VFS/NetSFTP.h>
 #include <VFS/NetWebDAV.h>
+#include <VFS/NetS3.h>
 #include <NimbleCommander/Bootstrap/AppDelegate.h>
 
 namespace nc::bootstrap {
@@ -27,6 +28,7 @@ void RegisterAvailableVFS()
     VFSFactory::Instance().RegisterVFS(vfs::ArchiveRawHost::Meta());
     VFSFactory::Instance().RegisterVFS(vfs::XAttrHost::Meta());
     VFSFactory::Instance().RegisterVFS(vfs::WebDAVHost::Meta());
+    VFSFactory::Instance().RegisterVFS(vfs::S3Host::Meta());
 }
 
 } // namespace nc::bootstrap

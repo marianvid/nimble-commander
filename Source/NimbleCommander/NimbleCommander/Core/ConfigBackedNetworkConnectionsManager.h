@@ -61,3 +61,13 @@ private:
     mutable std::mutex m_PendingMountRequestsLock;
     std::vector<std::pair<void *, MountShareCallback>> m_PendingMountRequests;
 };
+
+namespace nc::vfs::s3 {
+class HostConfiguration;
+}
+
+// Turns a stored S3 connection into a host configuration.
+// For profile-based connections the credentials are read from ~/.aws, _secret_key is ignored then.
+// Throws ErrorException if the referenced AWS profile doesn't exist.
+nc::vfs::s3::HostConfiguration MakeS3HostConfiguration(const nc::panel::NetworkConnectionsManager::S3 &_connection,
+                                                       const std::string &_secret_key);

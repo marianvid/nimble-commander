@@ -295,6 +295,10 @@ static void Perform(SEL _sel, const PanelActionsMap &_map, PanelController *_tar
 {
     PERFORM;
 }
+- (IBAction)onGoToS3:(id)sender
+{
+    PERFORM;
+}
 - (IBAction)OnGoToNetworkShare:(id)sender
 {
     PERFORM;

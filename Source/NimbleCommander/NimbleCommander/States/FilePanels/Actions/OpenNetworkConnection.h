@@ -30,6 +30,11 @@ struct OpenNewWebDAVConnection final : PanelAction, private OpenConnectionBase {
     void Perform(PanelController *_target, id _sender) const override;
 };
 
+struct OpenNewS3Connection final : PanelAction, private OpenConnectionBase {
+    OpenNewS3Connection(NetworkConnectionsManager &_net_mgr);
+    void Perform(PanelController *_target, id _sender) const override;
+};
+
 struct OpenNewLANShare final : PanelAction, private OpenConnectionBase {
     OpenNewLANShare(NetworkConnectionsManager &_net_mgr);
     void Perform(PanelController *_target, id _sender) const override;

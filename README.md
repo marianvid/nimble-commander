@@ -1,6 +1,24 @@
 [![Build and Test](https://github.com/mikekazakov/nimble-commander/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/mikekazakov/nimble-commander/actions/workflows/build.yml)
 [![Nightly Build](https://github.com/mikekazakov/nimble-commander/actions/workflows/nightly.yml/badge.svg?branch=main)](https://github.com/mikekazakov/nimble-commander/actions/workflows/nightly.yml)
 
+# About this fork
+
+This is a fork of [Nimble Commander](https://github.com/mikekazakov/nimble-commander) by Michael Kazakov.
+
+**Why it exists.** I needed a fast, keyboard-driven, dual-pane file manager on macOS with an integrated terminal, SFTP
+and Amazon S3 access. My Commander One license ran out of re-activations after a macOS upgrade and paying again
+wasn't justified; muCommander was too slow. Nimble Commander already had everything - native speed, the Norton
+Commander style workflow, an overlapped terminal, SFTP with key files - except S3. So this fork adds it.
+
+**What it adds.** A native S3 virtual file system: AWS S3 and S3-compatible storages (MinIO, Cloudflare R2, Wasabi,
+Backblaze B2, ...) browsed directly in the file panels, with reading, writing (including multipart uploads of
+arbitrarily large files), directories, renames, server-side copies, keys in the Keychain or taken from the AWS CLI
+profiles. No mounting and no external tools. Details, limitations and the design are in [Docs/S3.md](Docs/S3.md).
+
+Everything else follows upstream. The code stays under the GNU General Public License version 3.
+
+---
+
 # Nimble Commander
 ![](Docs/nc.png)
 Nimble Commander is a free dual-pane file manager for macOS, designed with a focus on speed, keyboard-based navigation, and flexibility.  

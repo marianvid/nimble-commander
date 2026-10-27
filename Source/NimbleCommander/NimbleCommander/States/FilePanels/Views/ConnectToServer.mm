@@ -4,6 +4,7 @@
 #include "SFTPConnectionSheetController.h"
 #include "NetworkShareSheetController.h"
 #include "WebDAVConnectionSheetController.h"
+#include "S3ConnectionSheetController.h"
 #include <Utility/SheetWithHotkeys.h>
 #include <Utility/ObjCpp.h>
 #include <Utility/StringExtras.h>
@@ -46,6 +47,11 @@ private:
     void Visit(const nc::panel::NetworkConnectionsManager::WebDAV & /*_webdav*/) override
     {
         m_Sheet = [[WebDAVConnectionSheetController alloc] init];
+    }
+
+    void Visit(const nc::panel::NetworkConnectionsManager::S3 & /*_s3*/) override
+    {
+        m_Sheet = [[S3ConnectionSheetController alloc] init];
     }
 
     nc::panel::NetworkConnectionsManager::Connection m_Connection;
@@ -111,6 +117,7 @@ static void PeformClickIfEnabled(NSSegmentedControl *_control, int _segment)
       PeformClickIfEnabled(self.controlButtons, 2);
     };
     [self.controlButtons setMenu:self.addNewConnectionMenu forSegment:0];
+    [self insertS3MenuItem];
 
     m_Connections = m_Manager->AllConnectionsByMRU();
 
@@ -241,7 +248,9 @@ static void PeformClickIfEnabled(NSSegmentedControl *_control, int _segment)
                        self->m_Manager->InsertConnection(new_connection);
                        [self reloadConnections];
                    }
-                   if( new_password != password || new_connection != connection )
+                   const auto s3 = new_connection.Cast<nc::panel::NetworkConnectionsManager::S3>();
+                   const bool uses_keychain = !s3 || s3->aws_profile.empty();
+                   if( uses_keychain && (new_password != password || new_connection != connection) )
                        self->m_Manager->SetPassword(new_connection, new_password);
                }
              }];
@@ -261,7 +270,9 @@ static void PeformClickIfEnabled(NSSegmentedControl *_control, int _segment)
                    withPassword:(const std::string &)_password
 {
     m_Manager->InsertConnection(_connection);
-    m_Manager->SetPassword(_connection, _password);
+    const auto s3 = _connection.Cast<nc::panel::NetworkConnectionsManager::S3>();
+    if( !s3 || s3->aws_profile.empty() )
+        m_Manager->SetPassword(_connection, _password);
 
     [self reloadConnections];
     [self focusConnection:_connection];
@@ -290,6 +301,26 @@ static void PeformClickIfEnabled(NSSegmentedControl *_control, int _segment)
 - (IBAction)onAddWebDAVServer:(id) [[maybe_unused]] _sender
 {
     [self runNewConnectionSheet:[[WebDAVConnectionSheetController alloc] init]];
+}
+
+- (IBAction)onAddS3Connection:(id) [[maybe_unused]] _sender
+{
+    [self runNewConnectionSheet:[[S3ConnectionSheetController alloc] init]];
+}
+
+// The "add" menu lives in the NIB; the S3 entry is appended right after the WebDAV one.
+- (void)insertS3MenuItem
+{
+    NSMenu *const menu = self.addNewConnectionMenu;
+    NSMenuItem *const item = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"S3 Storage...", "")
+                                                        action:@selector(onAddS3Connection:)
+                                                 keyEquivalent:@""];
+    item.target = self;
+    const NSInteger webdav = [menu indexOfItemWithTarget:self andAction:@selector(onAddWebDAVServer:)];
+    if( webdav >= 0 )
+        [menu insertItem:item atIndex:webdav + 1];
+    else
+        [menu addItem:item];
 }
 
 - (IBAction)onAddNetworkShare:(id) [[maybe_unused]] _sender

@@ -49,6 +49,7 @@ using PanelActionsMap = ankerl::unordered_dense::map<SEL, std::unique_ptr<const 
 - (IBAction)OnGoToFTP:(id)sender;
 - (IBAction)OnGoToSFTP:(id)sender;
 - (IBAction)onGoToWebDAV:(id)sender;
+- (IBAction)onGoToS3:(id)sender;
 - (IBAction)OnGoToNetworkShare:(id)sender;
 - (IBAction)OnConnectToNetworkServer:(id)sender;
 - (IBAction)copy:(id)sender;

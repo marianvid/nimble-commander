@@ -33,6 +33,16 @@ struct ConnectionPathBuilder : public NetworkConnectionsManager::ConnectionVisit
     std::string Path() { return std::move(path); }
 
 private:
+    void Visit(const NetworkConnectionsManager::S3 &s3) override
+    {
+        std::string where = s3.endpoint.empty() ? "aws" + (s3.region.empty() ? "" : "-" + s3.region) : s3.endpoint;
+        if( const auto scheme = where.find("://"); scheme != std::string::npos )
+            where.erase(0, scheme + 3);
+        while( !where.empty() && where.back() == '/' )
+            where.pop_back();
+        const std::string who = s3.aws_profile.empty() ? s3.access_key : "profile:" + s3.aws_profile;
+        path = "s3://" + (who.empty() ? "" : who + "@") + where + (s3.bucket.empty() ? "" : "/" + s3.bucket);
+    }
     void Visit(const NetworkConnectionsManager::FTP &ftp) override
     {
         path = "ftp://" + (ftp.user.empty() ? ftp.host : ftp.user + "@" + ftp.host);
@@ -109,6 +119,10 @@ void NetworkConnectionsManager::ConnectionVisitor::Visit(const NetworkConnection
 }
 
 void NetworkConnectionsManager::ConnectionVisitor::Visit(const NetworkConnectionsManager::WebDAV & /*unused*/)
+{
+}
+
+void NetworkConnectionsManager::ConnectionVisitor::Visit(const NetworkConnectionsManager::S3 & /*unused*/)
 {
 }
 

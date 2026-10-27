@@ -3,6 +3,7 @@
 #include <VFS/NetFTP.h>
 #include <VFS/NetSFTP.h>
 #include <VFS/NetWebDAV.h>
+#include <VFS/NetS3.h>
 #include <Cocoa/Cocoa.h>
 
 static const auto g_16px = NSMakeSize(16, 16);
@@ -38,7 +39,7 @@ NSImage *NetworkConnectionIconProvider::Icon16px(const nc::panel::NetworkConnect
 static NSImage *ImageFromTag(const char *_tag)
 {
     if( _tag == nc::vfs::FTPHost::UniqueTag || _tag == nc::vfs::SFTPHost::UniqueTag ||
-        _tag == nc::vfs::WebDAVHost::UniqueTag )
+        _tag == nc::vfs::WebDAVHost::UniqueTag || _tag == nc::vfs::S3Host::UniqueTag )
         return Generic();
 
     return nil;

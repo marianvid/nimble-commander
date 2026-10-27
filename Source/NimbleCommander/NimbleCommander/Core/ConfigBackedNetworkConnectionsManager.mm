@@ -10,6 +10,7 @@
 #include <VFS/NetFTP.h>
 #include <VFS/NetSFTP.h>
 #include <VFS/NetWebDAV.h>
+#include <VFS/NetS3.h>
 #include <Config/RapidJSON.h>
 #include <NimbleCommander/GeneralUI/AskForPasswordWindowController.h>
 #include <Base/spinlock.h>
@@ -93,6 +94,17 @@ static config::Value ConnectionToJSONObject(NetworkConnectionsManager::Connectio
         o.AddMember("path", value(c.path.c_str(), alloc), alloc);
         o.AddMember("https", value(c.https), alloc);
         o.AddMember("port", value(c.port), alloc);
+        return o;
+    }
+    if( const auto p = _c.Cast<NetworkConnectionsManager::S3>() ) {
+        const auto &c = *p;
+        auto o = FillBasicConnectionInfoInJSONObject("s3", c);
+        o.AddMember("endpoint", value(c.endpoint.c_str(), alloc), alloc);
+        o.AddMember("region", value(c.region.c_str(), alloc), alloc);
+        o.AddMember("bucket", value(c.bucket.c_str(), alloc), alloc);
+        o.AddMember("access_key", value(c.access_key.c_str(), alloc), alloc);
+        o.AddMember("aws_profile", value(c.aws_profile.c_str(), alloc), alloc);
+        o.AddMember("path_style", value(c.path_style), alloc);
         return o;
     }
 
@@ -190,6 +202,24 @@ static std::optional<NetworkConnectionsManager::Connection> JSONObjectToConnecti
 
         return NetworkConnectionsManager::Connection(std::move(c));
     }
+    else if( type == "s3" ) {
+        const auto get_string = [&](const char *_key) -> std::string {
+            return has_string(_key) ? _object[_key].GetString() : std::string{};
+        };
+        NetworkConnectionsManager::S3 c;
+        c.uuid = *uuid;
+        c.title = _object["title"].GetString();
+        c.endpoint = get_string("endpoint");
+        c.region = get_string("region");
+        c.bucket = get_string("bucket");
+        c.access_key = get_string("access_key");
+        c.aws_profile = get_string("aws_profile");
+        c.path_style = has_bool("path_style") ? _object["path_style"].GetBool() : false;
+        if( c.access_key.empty() && c.aws_profile.empty() )
+            return std::nullopt;
+
+        return NetworkConnectionsManager::Connection(std::move(c));
+    }
 
     return std::nullopt;
 }
@@ -220,6 +250,8 @@ static std::string KeychainWhereFromConnection(const NetworkConnectionsManager::
                c->share;
     if( auto c = _c.Cast<NetworkConnectionsManager::WebDAV>() )
         return (c->https ? "https://" : "http://") + c->host + (c->path.empty() ? "" : "/" + c->path);
+    if( auto c = _c.Cast<NetworkConnectionsManager::S3>() )
+        return "s3://" + (c->endpoint.empty() ? "aws" : c->endpoint) + (c->bucket.empty() ? "" : "/" + c->bucket);
     return "";
 }
 
@@ -233,7 +265,39 @@ static std::string KeychainAccountFromConnection(const NetworkConnectionsManager
         return c->user;
     if( auto c = _c.Cast<NetworkConnectionsManager::WebDAV>() )
         return c->user;
+    if( auto c = _c.Cast<NetworkConnectionsManager::S3>() )
+        return c->access_key;
     return "";
+}
+
+vfs::s3::HostConfiguration MakeS3HostConfiguration(const NetworkConnectionsManager::S3 &_connection,
+                                                   const std::string &_secret_key)
+{
+    vfs::s3::HostConfiguration config;
+    config.endpoint = _connection.endpoint;
+    config.region = _connection.region;
+    config.bucket = _connection.bucket;
+    config.path_style = _connection.path_style;
+    if( _connection.aws_profile.empty() ) {
+        config.access_key = _connection.access_key;
+        config.secret_key = _secret_key;
+        return config;
+    }
+
+    const auto profile = vfs::s3::LoadAwsProfile(_connection.aws_profile);
+    if( !profile ) {
+        Error err{Error::POSIX, ENOENT};
+        err.LocalizedFailureReason("AWS profile \"" + _connection.aws_profile + "\" was not found in ~/.aws");
+        throw ErrorException(err);
+    }
+    config.access_key = profile->access_key;
+    config.secret_key = profile->secret_key;
+    config.session_token = profile->session_token;
+    if( config.region.empty() )
+        config.region = profile->region;
+    if( config.endpoint.empty() )
+        config.endpoint = profile->endpoint;
+    return config;
 }
 
 ConfigBackedNetworkConnectionsManager::ConfigBackedNetworkConnectionsManager(
@@ -440,6 +504,15 @@ ConfigBackedNetworkConnectionsManager::ConnectionForVFS(const VFSHost &_vfs) con
                 return p->host == webdav->Host() && p->path == webdav->Path() && p->user == webdav->Username();
             return false;
         };
+    else if( auto s3 = dynamic_cast<const vfs::S3Host *>(&_vfs) )
+        pred = [s3](const Connection &i) {
+            if( auto p = i.Cast<S3>() )
+                return p->endpoint == s3->Endpoint() && p->bucket == s3->Bucket() &&
+                       (p->aws_profile.empty() ? p->access_key : vfs::s3::LoadAwsProfile(p->aws_profile)
+                                                                     .value_or(vfs::s3::AwsProfile{})
+                                                                     .access_key) == s3->AccessKey();
+            return false;
+        };
 
     if( !pred )
         return std::nullopt;
@@ -455,6 +528,13 @@ ConfigBackedNetworkConnectionsManager::ConnectionForVFS(const VFSHost &_vfs) con
 VFSHostPtr ConfigBackedNetworkConnectionsManager::SpawnHostFromConnection(const Connection &_connection,
                                                                           bool _allow_password_ui)
 {
+    if( auto s3 = _connection.Cast<S3>(); s3 && !s3->aws_profile.empty() ) {
+        // Profile-based connections take their credentials from ~/.aws, no Keychain involved.
+        auto host = std::make_shared<vfs::S3Host>(MakeS3HostConfiguration(*s3, {}));
+        ReportUsage(_connection);
+        return host;
+    }
+
     std::string passwd;
     bool shoud_save_passwd = false;
     if( !GetPassword(_connection, passwd) ) {
@@ -470,6 +550,8 @@ VFSHostPtr ConfigBackedNetworkConnectionsManager::SpawnHostFromConnection(const 
         host = std::make_shared<vfs::SFTPHost>(sftp->host, sftp->user, passwd, sftp->keypath, sftp->port);
     else if( auto w = _connection.Cast<WebDAV>() )
         host = std::make_shared<vfs::WebDAVHost>(w->host, w->user, passwd, w->path, w->https, w->port);
+    else if( auto s3 = _connection.Cast<S3>() )
+        host = std::make_shared<vfs::S3Host>(MakeS3HostConfiguration(*s3, passwd));
 
     if( host ) {
         ReportUsage(_connection);

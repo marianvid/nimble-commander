@@ -114,6 +114,7 @@ PanelActionsMap BuildPanelActionsMap(nc::config::Config &_global_config,
     add(@selector(OnGoToFTP:), new OpenNewFTPConnection{_net_mgr});
     add(@selector(OnGoToSFTP:), new OpenNewSFTPConnection{_net_mgr});
     add(@selector(onGoToWebDAV:), new OpenNewWebDAVConnection{_net_mgr});
+    add(@selector(onGoToS3:), new OpenNewS3Connection{_net_mgr});
     add(@selector(OnGoToNetworkShare:), new OpenNewLANShare{_net_mgr});
     add(@selector(OnConnectToNetworkServer:), new OpenNetworkConnections{_net_mgr});
     add(@selector(OnGoToSavedConnectionItem:), new OpenExistingNetworkConnection{_net_mgr});

@@ -6,10 +6,13 @@
 #include "../Views/NetworkShareSheetController.h"
 #include "../Views/ConnectToServer.h"
 #include "../Views/WebDAVConnectionSheetController.h"
+#include "../Views/S3ConnectionSheetController.h"
 #include <VFS/Native.h>
 #include <VFS/NetFTP.h>
 #include <VFS/NetSFTP.h>
 #include <VFS/NetWebDAV.h>
+#include <VFS/NetS3.h>
+#include <NimbleCommander/Core/ConfigBackedNetworkConnectionsManager.h>
 #include <NimbleCommander/Bootstrap/NativeVFSHostInstance.h>
 #include <NimbleCommander/Core/Alert.h>
 #include <NimbleCommander/Core/AnyHolder.h>
@@ -123,6 +126,41 @@ static bool GoToWebDAV(PanelController *_target,
             Alert *const alert = [[Alert alloc] init];
             alert.messageText =
                 NSLocalizedString(@"WebDAV connection error:", "Showing error when connecting to WebDAV server");
+            alert.informativeText = [NSString stringWithUTF8StdString:e.error().LocalizedFailureReason()];
+            [alert addButtonWithTitle:NSLocalizedString(@"OK", "")];
+            [alert runModal];
+        });
+    }
+    return false;
+}
+
+static bool GoToS3(PanelController *_target,
+                   const NetworkConnectionsManager::Connection &_connection,
+                   const std::string &_secret_key,
+                   NetworkConnectionsManager &_net_mgr)
+{
+    dispatch_assert_background_queue();
+    auto &info = _connection.Get<NetworkConnectionsManager::S3>();
+    try {
+        const auto host = std::make_shared<vfs::S3Host>(MakeS3HostConfiguration(info, _secret_key));
+        dispatch_to_main_queue([=] {
+            const auto request = std::make_shared<DirectoryChangeRequest>();
+            request->RequestedDirectory = "/";
+            request->VFS = host;
+            request->PerformAsynchronous = true;
+            request->InitiatedByUser = true;
+            [_target GoToDirWithContext:request];
+        });
+
+        // save successful connection to history
+        _net_mgr.ReportUsage(_connection);
+
+        return true;
+    } catch( const ErrorException &e ) {
+        dispatch_to_main_queue([=] {
+            Alert *const alert = [[Alert alloc] init];
+            alert.messageText =
+                NSLocalizedString(@"S3 connection error:", "Showing error when connecting to an S3 storage");
             alert.informativeText = [NSString stringWithUTF8StdString:e.error().LocalizedFailureReason()];
             [alert addButtonWithTitle:NSLocalizedString(@"OK", "")];
             [alert runModal];
@@ -270,10 +308,45 @@ void OpenNewWebDAVConnection::Perform(PanelController *_target, id /*_sender*/) 
              }];
 }
 
+OpenNewS3Connection::OpenNewS3Connection(NetworkConnectionsManager &_net_mgr) : OpenConnectionBase(_net_mgr)
+{
+}
+
+void OpenNewS3Connection::Perform(PanelController *_target, id /*_sender*/) const
+{
+    const auto sheet = [[S3ConnectionSheetController alloc] init];
+    const auto window = _target.window;
+    [sheet beginSheetForWindow:window
+             completionHandler:^(NSModalResponse returnCode) {
+               if( returnCode != NSModalResponseOK )
+                   return;
+
+               const auto connection = sheet.connection;
+               const std::string secret = sheet.password;
+
+               m_NetMgr.InsertConnection(connection);
+               if( connection.Get<NetworkConnectionsManager::S3>().aws_profile.empty() )
+                   m_NetMgr.SetPassword(connection, secret);
+               dispatch_to_background([=, this] {
+                   const auto activity = [_target registerExtActivity];
+                   GoToS3(_target, connection, secret, m_NetMgr);
+               });
+             }];
+}
+
 static void GoToConnection(PanelController *_target,
                            const NetworkConnectionsManager::Connection &connection,
                            NetworkConnectionsManager &_net_mgr)
 {
+    if( const auto s3 = connection.Cast<NetworkConnectionsManager::S3>(); s3 && !s3->aws_profile.empty() ) {
+        // Credentials come from ~/.aws, there's nothing to ask for.
+        dispatch_to_background([=, &_net_mgr] {
+            const auto activity = [_target registerExtActivity];
+            GoToS3(_target, connection, {}, _net_mgr);
+        });
+        return;
+    }
+
     std::string passwd;
     bool should_save_passwd = false;
     if( !_net_mgr.GetPassword(connection, passwd) ) {
@@ -302,6 +375,13 @@ static void GoToConnection(PanelController *_target,
         dispatch_to_background([=, &_net_mgr] {
             const auto activity = [_target registerExtActivity];
             const bool success = GoToWebDAV(_target, connection, passwd, _net_mgr);
+            if( success && should_save_passwd )
+                _net_mgr.SetPassword(connection, passwd);
+        });
+    else if( connection.IsType<NetworkConnectionsManager::S3>() )
+        dispatch_to_background([=, &_net_mgr] {
+            const auto activity = [_target registerExtActivity];
+            const bool success = GoToS3(_target, connection, passwd, _net_mgr);
             if( success && should_save_passwd )
                 _net_mgr.SetPassword(connection, passwd);
         });

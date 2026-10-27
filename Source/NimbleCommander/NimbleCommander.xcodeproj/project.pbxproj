@@ -171,6 +171,7 @@
 		CF0A487E2BDDA52A00833160 /* NetworkShareSheetController.mm in Sources */ = {isa = PBXBuildFile; fileRef = CFD8CDA61E84CC3B00E4DC53 /* NetworkShareSheetController.mm */; };
 		CF0A487F2BDDA54100833160 /* SFTPConnectionSheetController.mm in Sources */ = {isa = PBXBuildFile; fileRef = CFDB17C219B3075000781976 /* SFTPConnectionSheetController.mm */; };
 		CF0A48802BDDA54800833160 /* WebDAVConnectionSheetController.mm in Sources */ = {isa = PBXBuildFile; fileRef = CF3E2F781F5FC277001BFFCE /* WebDAVConnectionSheetController.mm */; };
+		5E3A0C0100000000000000A3 /* S3ConnectionSheetController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5E3A0C0100000000000000A2 /* S3ConnectionSheetController.mm */; };
 		CF0A48812BDDA54F00833160 /* QuickLookOverlay.mm in Sources */ = {isa = PBXBuildFile; fileRef = CFDAC2DD1DFD137F0039A104 /* QuickLookOverlay.mm */; };
 		CF0A48822BDDA55600833160 /* QuickLookPanel.mm in Sources */ = {isa = PBXBuildFile; fileRef = CF5E9A5F1FCD6ADF005608F5 /* QuickLookPanel.mm */; };
 		CF0A48832BDDA55F00833160 /* SpotlightSearchPopupViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = CFFED08A1CC0B41F0059611B /* SpotlightSearchPopupViewController.mm */; };
@@ -966,6 +967,8 @@
 		CF3E2F651F5FA7C8001BFFCE /* VFSInit.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = VFSInit.mm; path = NimbleCommander/Bootstrap/VFSInit.mm; sourceTree = SOURCE_ROOT; };
 		CF3E2F771F5FC24C001BFFCE /* WebDAVConnectionSheetController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WebDAVConnectionSheetController.h; path = NimbleCommander/States/FilePanels/Views/WebDAVConnectionSheetController.h; sourceTree = SOURCE_ROOT; };
 		CF3E2F781F5FC277001BFFCE /* WebDAVConnectionSheetController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = WebDAVConnectionSheetController.mm; path = NimbleCommander/States/FilePanels/Views/WebDAVConnectionSheetController.mm; sourceTree = SOURCE_ROOT; };
+		5E3A0C0100000000000000A1 /* S3ConnectionSheetController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = S3ConnectionSheetController.h; path = NimbleCommander/States/FilePanels/Views/S3ConnectionSheetController.h; sourceTree = SOURCE_ROOT; };
+		5E3A0C0100000000000000A2 /* S3ConnectionSheetController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = S3ConnectionSheetController.mm; path = NimbleCommander/States/FilePanels/Views/S3ConnectionSheetController.mm; sourceTree = SOURCE_ROOT; };
 		CF3E6DF61E3870AB002B4AAD /* PanelViewPresentationSettings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PanelViewPresentationSettings.h; path = NimbleCommander/States/FilePanels/PanelViewPresentationSettings.h; sourceTree = SOURCE_ROOT; };
 		CF3E6DF71E3870AB002B4AAD /* PanelViewPresentationSettings.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = PanelViewPresentationSettings.mm; path = NimbleCommander/States/FilePanels/PanelViewPresentationSettings.mm; sourceTree = SOURCE_ROOT; };
 		CF3FC99C2D99502900878079 /* Layout.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Layout.h; path = NimbleCommander/States/FilePanels/Gallery/Layout.h; sourceTree = SOURCE_ROOT; };
@@ -2003,6 +2006,8 @@
 				CFCCFBB21A5D340000313845 /* SFTPConnectionSheetController.xib */,
 				CF3E2F771F5FC24C001BFFCE /* WebDAVConnectionSheetController.h */,
 				CF3E2F781F5FC277001BFFCE /* WebDAVConnectionSheetController.mm */,
+				5E3A0C0100000000000000A1 /* S3ConnectionSheetController.h */,
+				5E3A0C0100000000000000A2 /* S3ConnectionSheetController.mm */,
 				CF36DBE51F6BCDA0004A018E /* WebDAVConnectionSheetController.xib */,
 			);
 			name = Network;
@@ -3169,6 +3174,7 @@
 				CF0A48042BDD9F5B00833160 /* PreferencesWindowExternalEditorsTab.mm in Sources */,
 				CF0A48212BDDA03E00833160 /* PanelControllerPersistency.mm in Sources */,
 				CF0A48802BDDA54800833160 /* WebDAVConnectionSheetController.mm in Sources */,
+				5E3A0C0100000000000000A3 /* S3ConnectionSheetController.mm in Sources */,
 				CF0A480D2BDD9F8E00833160 /* PreferencesWindowThemesTabImportSheet.mm in Sources */,
 				CF0A48792BDDA51100833160 /* FindFilesSheetController.mm in Sources */,
 				CF0A47F72BDD9E7A00833160 /* AppDelegate+Migration.mm in Sources */,

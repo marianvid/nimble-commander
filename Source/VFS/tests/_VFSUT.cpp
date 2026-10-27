@@ -7,3 +7,4 @@
 #include "VFSArchiveRaw_UT.cpp"
 #include "VFSNative_UT.cpp"
 #include "NetSFTP/KeyValidator_UT.cpp"
+#include "NetS3/S3_UT.cpp"
